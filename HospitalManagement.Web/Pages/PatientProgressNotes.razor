@@ -1,0 +1,89 @@
+﻿@page "/ProgressNotes/{patientId:int}"
+@using HospitalManagement.Web.Models
+@using HospitalManagement.Web.Contracts
+@inject IProgressNotes ProgressNotesService
+<h3>Progress Notes</h3>
+
+@if (progressNotes == null || !progressNotes.Any())
+{
+    <p>No progress notes available for this patient.</p>
+}
+
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Visit Date</th>
+                <th>Progress Text</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var note in progressNotes)
+            {
+                <tr>
+                    <td>@Convert.ToString(note.VisitDate)</td>
+                    <td>@note.ProgressText </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<h4>Add Progress Note</h4>
+
+@if (errorMessage != null)
+{
+    <p class="text-danger">@errorMessage</p>
+}
+
+<form @onsubmit="AddProgressNote">
+    <div class="form-group">
+        <label for="sectionName">Section Name</label>
+        <input id="sectionName" class="form-control" @bind="progressNote.ProgressText" />
+    </div>
+    
+    <button type="submit" class="btn btn-primary">Add Progress Note</button>
+</form>
+
+@code {
+    [Parameter]
+    public int PatientId { get; set; }
+
+    private List<ProgressNotes> progressNotes;
+    private ProgressNotes progressNote = new ProgressNotes();
+    private string errorMessage;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Call API to get progress notes for the patient
+            progressNotes = await ProgressNotesService.GetProgressNoteAsync(PatientId);
+        }
+        catch(Exception ex)
+        {
+            errorMessage = $"An error occurred: {ex.Message}";
+        }
+
+    }
+
+    private async Task AddProgressNote()
+    {
+        try
+        {
+            progressNote.PatientId = PatientId;
+            progressNote.VisitDate = DateTime.Now;
+            await ProgressNotesService.AddProgressNoteAsync(progressNote);
+            progressNote = new ProgressNotes();
+            progressNotes = await ProgressNotesService.GetProgressNoteAsync(PatientId);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"An error occurred: {ex.Message}";
+        }
+    }
+
+
+}

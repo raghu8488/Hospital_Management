@@ -1,0 +1,117 @@
+﻿@page "/"
+@inherits PatientListBase;
+@using HospitalManagement.Web.Contracts
+@inject IPatient PatientService;
+@inject IJSRuntime JSRuntime
+<h3>Patient List</h3>
+
+
+<div class="input-group mb-3">
+    <input type="text" class="form-control" @bind="searchTerm" placeholder="Search by First Name">
+    <div class="input-group-append">
+        <button class="btn btn-outline-secondary" @onclick="SearchPatients">Search</button>
+        <button class="btn btn-outline-secondary" @onclick="ResetSearch">Reset</button>
+    </div>
+</div>
+
+@if (patientList.Count() > 0)
+{
+    <table class="table">
+        <thead>
+            <tr>
+                
+                <th scope="col">First Name</th>
+                <th scope="col">Last Name</th>
+                <th scope="col">Address</th>
+                <th scope="col">State</th>
+                <th scope="col">City</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var patient in    patientList)
+            {
+                <tr>
+                   
+                    <td class="align-middle">
+                        @patient.FirstName
+                    </td>
+                    <td class="align-middle">
+                        @patient.LastName
+                    </td>
+                    <td class="align-middle">
+                        @patient.Address
+                    </td>
+                    <td class="align-middle">
+                        @patient.State
+                    </td>
+                    <td class="align-middle">
+                        @patient.City
+                    </td>
+                    <td class="align-middle">
+                        <button type="button" @onclick="() => EditPatient(patient.PatientId)" class="btn btn-info">Update</button>
+                    </td>
+                    <td class="align-middle">
+                        <button type="button" @onclick="() => ViewProgress(patient.PatientId)" class="btn btn-primary">View Progress</button>
+                    </td>
+                    <td class="align-middle">
+                        <button type="button" class="btn btn-danger" @onclick="() => DeletePatient(patient.PatientId)">Delete</button>
+                    </td>
+                </tr>
+             }
+            </tbody>
+    </table>
+}
+else if (patientList.Count==0)
+{
+    <span>
+        No Patients to display...
+    </span>
+}
+else
+{
+    <span>
+        Loading Patients...
+    </span>
+}
+
+@code
+{
+    @inject NavigationManager NavigationManager
+
+    private string searchTerm = "";
+
+    private async void DeletePatient(int id)
+    {
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete?");
+        if (confirmed)
+        {
+            await PatientService.DeletePatient(id);
+            patientList.RemoveAll(p => p.PatientId == id);
+            StateHasChanged();
+        }
+    }
+
+    private void EditPatient(int patientId)
+    {
+        NavigationManager.NavigateTo($"/Editpatient/{patientId}");
+    }
+
+    private void ViewProgress(int patientId)
+    {
+        NavigationManager.NavigateTo($"/ProgressNotes/{patientId}");
+    }
+
+    private async Task SearchPatients()
+    {
+        var patients = await PatientService.GetPatients();
+        patientList = patients.Where(x => x.FirstName.ToLower().Contains(searchTerm.ToLower())).ToList();
+    }
+
+    private async Task ResetSearch()
+    {
+        patientList = await PatientService.GetPatients();
+    }
+
+}
+
+
