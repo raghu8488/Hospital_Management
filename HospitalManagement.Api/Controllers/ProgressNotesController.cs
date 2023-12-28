@@ -1,6 +1,7 @@
 ﻿using HospitalManagement.Api.Contracts;
 using HospitalManagement.Api.Models;
 using HospitalManagement.Api.Repository;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,6 +9,7 @@ namespace HospitalManagement.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class ProgressNotesController : ControllerBase
     {
         private readonly IProgressNotesRepository _progressNotesRepository;
